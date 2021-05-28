@@ -10,14 +10,14 @@ import string
 
 in_dir = "D:\\Really Useful Files\\images\\mandel\\frames\\12_10_orig\\"           #input directory
 in_name = "orig"               #input file name
-ext = ".png"                   #file extension
-out_dir = "C:\\test\\"          #output directory
+ext = ".jpg"                   #file extension
+out_dir = "C:\\test\\fjfj\\"          #output directory
 out_name = "new000"                #output file name +index
 #files_amt = 10                  #number of files to be outputted
-bytes_amt = 1               #number of bytes to be modified per file
+bytes_amt = 200               #number of bytes to be modified per file
 #rotations = [180, 180]
 lo = "  "
-iterpass = 0
+_flag = True
 
 def splitter(input_vid):
     os.chdir(in_dir)
@@ -50,24 +50,22 @@ def compensateRotation(out_path):
     print(lo + lo + "Compensation finished!")
 
 def verifyImg(in_path, out_path):
-    iterpass = 0
+    global _flag
     try:
         img = Image.open(out_path)
         img.verify()
         img = Image.open(out_path) 
         img.save(out_path)
         print(lo + "Verification passed!")
-        iterpass = 0
-    except (IOError, SyntaxError, OSError, UnidentifiedImageError, AttributeError, RecursionError) as e:
-
-        #print(lo + "[PASS{}] Bad image, error: \"{}\", removing broken file".format(iterpass,e))
+        _flag = False
+    except (IOError, SyntaxError, OSError, UnidentifiedImageError, AttributeError, RecursionError, Image.DecompressionBombError) as e:
         shutil.copyfile(in_path, out_path)
-        #print(lo + "[PASS{}] File replaced, retrying glitch".format(iterpass))
+        _flag = True
     
-        glitch()
+
 
 def glitch():
-    #rotateRandom(out_path)
+
     fh = open(out_path, "r+b")
     offsets = []
     #iterpass += 1
@@ -81,9 +79,20 @@ def glitch():
         #print("Edited byte @ offset: {}, [{:>5}], Value: {}".format('0x%0*X' % (5, offset), offset, '0x%0*X' % (2,ord(randomByteValue))))
         #print("New Byte Value: " + str(hex(ord(randomByteValue)).zfill(2)).upper() + ", Random Str: " + randomStr)
     fh.close()
-    verifyImg(in_path, out_path)
-    #compensateRotation(out_path)
 
+
+
+def manager(in_path, out_path):
+    global _flag
+    #rotateRandom(out_path)
+    _flag = True
+    iterpass = 0
+    while _flag:
+        glitch()
+        verifyImg(in_path, out_path)
+        iterpass += 1
+    print(lo + lo + "Working image generated in {} passes".format(iterpass))
+    #compensateRotation(out_path)
 
 start = time.time()
 path, dirs, files = next(os.walk(in_dir))
@@ -102,7 +111,7 @@ for x in range(1, files_amt + 1):
     print(lo + "Out Path: " + out_path)
     shutil.copyfile(in_path, out_path)
     print(lo + "File copied!")
-    glitch()
+    manager(in_path, out_path)
     print("=Finished Rendering frame " + str(x) + ", " + str(files_amt - x) + " more to go!" + "=")
  
 
