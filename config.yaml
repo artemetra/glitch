@@ -1,0 +1,8 @@
+---
+ in_dir: "D:\\Really Useful Files\\images\\mandel\\frames\\12_10_orig\\"
+ in_name: "orig"
+ ext: ".jpg"
+ out_dir: "C:\\test\\fjfj\\"
+ out_name: "new000"
+ files_amt: 10
+ bytes_amt: 300
