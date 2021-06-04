@@ -2,12 +2,13 @@ import shutil
 import random
 import os
 from PIL import Image, UnidentifiedImageError
-import PIL
 import time
 import sys
 import cv2
 import string
 import yaml
+from datetime import datetime
+
 
 #Internal flags and variables.
 lo = "  "
@@ -59,8 +60,8 @@ def verifyImg(in_path, out_path):
     
 
 
-def glitch():
-
+def glitch(out_path):
+    size = os.path.getsize(out_path)
     fh = open(out_path, "r+b")
     offsets = []
     for j in range(bytes_amt):
@@ -82,7 +83,7 @@ def manager(in_path, out_path):
     _flag = True
     iterpass = 0
     while _flag:
-        glitch()
+        glitch(out_path)
         verifyImg(in_path, out_path)
         iterpass += 1
     print(lo + lo + "Working image generated in {} passes".format(iterpass))
@@ -103,7 +104,7 @@ def main():
         trailing_0 = str(x).zfill(3)
         in_path = in_dir + in_name + ext
         print(lo + "In Path: " + in_path)
-        size = os.path.getsize(in_path)
+
         #bytes_amt = size 
         out_path = out_dir + out_name + trailing_0 + ext
         print(lo + "Out Path: " + out_path)
@@ -117,18 +118,31 @@ def main():
     end = time.time()
     print("=== Done! Elapsed time: " + str(end - start) + " seconds====")
 
+    logs.close()
 
+  
 
 
 if __name__ == '__main__':
     _conf = open(r"D:\\test\\glitcher\\config.yaml", 'r')
     config = yaml.safe_load(_conf)
-    in_dir = config['in_dir']
-    in_name = config['in_name']
-    ext = config['ext']
-    out_dir = config['out_dir']
-    out_name = config['out_name']
-    files_amt = config['files_amt']
-    bytes_amt = config['bytes_amt']
+    print("Config Loaded!")
+
+    in_dir      = config['in_dir']
+    in_name     = config['in_name']
+    ext         = config['ext']
+    out_dir     = config['out_dir']
+    out_name    = config['out_name']
+    files_amt   = config['files_amt']
+    bytes_amt   = config['bytes_amt']
+
+    log_name = "glitch log " + datetime.now().strftime("%d-%m-%Y @ %H %M %S") + ".yaml"
+    logs = open(in_dir + log_name, "w")
+
+
+    print("Log created: \"{}\" ".format(in_dir + log_name))
+    print("Initialised rendering...")
+
+
 
     main()
