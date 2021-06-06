@@ -6,12 +6,12 @@ import time
 import sys
 import cv2
 import string
+from numpy import rad2deg
 import yaml
 from datetime import datetime
 
 
 #Internal flags and variables.
-lo = "  "
 _flag = True
 _rot = 0
 
@@ -33,17 +33,17 @@ def splitter(input_vid):
 def rotateRandom(out_path):
     i = Image.open(out_path)
     _rot = random.randint(0, 1) * 180
-    print(lo + lo + "Rotating by " + str(_rot) + " degrees")
+    print("[{}] \t\tRotating by {} degrees".format(datetime.now(), _rot))
     i = i.rotate(int(_rot), expand = 1)
     i.save(out_path)
-    print(lo + lo + "Rotation applied!")
+    print("[{}] \t\tRotation applied!".format(datetime.now()))
     
 def compensateRotation(out_path):
     i = Image.open(out_path)
     i = i.rotate(360 - int(_rot), expand = 1)
-    print(lo + lo + "Compensating by " + str(360 - int(_rot)) + " degrees")
+    print("[{}] \t\tCompensating by {} degrees".format(datetime.now(), 360 - int(_rot)))
     i.save(out_path)
-    print(lo + lo + "Compensation finished!")
+    print("[{}] \t\tCompensation finished!".format(datetime.now()))
 
 def verifyImg(in_path, out_path):
     global _flag
@@ -52,7 +52,9 @@ def verifyImg(in_path, out_path):
         img.verify()
         img = Image.open(out_path) 
         img.save(out_path)
-        print(lo + "Verification passed!")
+
+        print(      "[{}] \tVerification passed!".format(datetime.now()))
+        logs.write( "[{}] \tVerification passed!\n".format(datetime.now()))
         _flag = False
     except (IOError, SyntaxError, OSError, UnidentifiedImageError, AttributeError, RecursionError, Image.DecompressionBombError) as e:
         shutil.copyfile(in_path, out_path)
@@ -64,15 +66,16 @@ def glitch(out_path):
     size = os.path.getsize(out_path)
     fh = open(out_path, "r+b")
     offsets = []
-    for j in range(bytes_amt):
-        offset = random.randint(100, size) #offsetted to avoid corrupting the header, still breaks sometimes :(
+    for _ in range(bytes_amt):
+        offset = random.randint(200, size) #offsetted to avoid corrupting the header, still breaks sometimes :(
         fh.seek(offset)      
-        #offsets.append(offset)
+        offsets.append(offset)
         randomStr = ''.join(random.SystemRandom().choice(string.printable + string.digits) for _ in range(1))
         randomByteValue = bytes(randomStr, 'ASCII')
         fh.write(randomByteValue)
-        #print("Edited byte @ offset: {}, [{:>5}], Value: {}".format('0x%0*X' % (5, offset), offset, '0x%0*X' % (2,ord(randomByteValue))))
-        #print("New Byte Value: " + str(hex(ord(randomByteValue)).zfill(2)).upper() + ", Random Str: " + randomStr)
+
+        logs.write("[{}] Edited byte @ offset: {}, [{:>5}], Value: {}\n".format(datetime.now(),'0x%0*X' % (5, offset), offset, '0x%0*X' % (2,ord(randomByteValue))))
+        #logs.write("[{}] New Byte Value: {}\n".format(datetime.now(), str(hex(ord(randomByteValue)).zfill(2)).upper()))
     fh.close()
 
 
@@ -86,7 +89,9 @@ def manager(in_path, out_path):
         glitch(out_path)
         verifyImg(in_path, out_path)
         iterpass += 1
-    print(lo + lo + "Working image generated in {} passes".format(iterpass))
+    
+    print(      "[{}] \t\tWorking image generated in {} passes".format(datetime.now(), iterpass))
+    logs.write( "[{}] \t\tWorking image generated in {} passes\n".format(datetime.now(), iterpass))
     #compensateRotation(out_path)
 
 
@@ -94,29 +99,41 @@ def manager(in_path, out_path):
 
 def main():
     start = time.time()
-    path, dirs, files = next(os.walk(in_dir))
-    files_amt = 1000
+    #path, dirs, files = next(os.walk(in_dir))
 
     for x in range(1, files_amt + 1):
-        #iterpass = 0
-        _rot = random.randint(0, 3) * 90
-        print("=Started Rendering frame " + str(x) +"...=")
+        #_rot = random.randint(0, 3) * 90
+        
+        print(      "[{}] =Started Rendering frame {}...=".format(datetime.now(), x))
+        logs.write( "[{}] =Started Rendering frame {}...=\n".format(datetime.now(), x))
+
         trailing_0 = str(x).zfill(3)
         in_path = in_dir + in_name + ext
-        print(lo + "In Path: " + in_path)
+
+        print(      "[{}] \tIn Path: {}".format(datetime.now(), in_path))
+        logs.write( "[{}] \tIn Path: {}\n".format(datetime.now(), in_path))
 
         #bytes_amt = size 
         out_path = out_dir + out_name + trailing_0 + ext
-        print(lo + "Out Path: " + out_path)
+
+        print(      "[{}] \tOut Path: {}".format(datetime.now(), out_path))
+        logs.write( "[{}] \tOut Path: {}\n".format(datetime.now(), out_path))
+
         shutil.copyfile(in_path, out_path)
-        print(lo + "File copied!")
+
+        print(      "[{}] \tFile copied!".format(datetime.now()))
+        logs.write( "[{}] \tFile copied!\n".format(datetime.now()))
+
         manager(in_path, out_path)
-        print("=Finished Rendering frame " + str(x) + ", " + str(files_amt - x) + " more to go!" + "=")
+
+        print(      "[{}] =Finished Rendering frame {}, {} more to go!=".format(datetime.now(), x, files_amt - x))
+        logs.write( "[{}] =Finished Rendering frame {}, {} more to go!=\n".format(datetime.now(), x, files_amt - x))
     
 
     
     end = time.time()
-    print("=== Done! Elapsed time: " + str(end - start) + " seconds====")
+    print(      "[{}] === Done! Elapsed time: {} seconds====".format(datetime.now(), end - start))
+    logs.write( "[{}] === Done! Elapsed time: {} seconds====\n".format(datetime.now(), end - start))
 
     logs.close()
 
@@ -126,7 +143,6 @@ def main():
 if __name__ == '__main__':
     _conf = open(r"D:\\test\\glitcher\\config.yaml", 'r')
     config = yaml.safe_load(_conf)
-    print("Config Loaded!")
 
     in_dir      = config['in_dir']
     in_name     = config['in_name']
@@ -136,12 +152,18 @@ if __name__ == '__main__':
     files_amt   = config['files_amt']
     bytes_amt   = config['bytes_amt']
 
-    log_name = "glitch log " + datetime.now().strftime("%d-%m-%Y @ %H %M %S") + ".yaml"
+    log_name = "glitch log " + datetime.now().strftime("%d-%m-%Y @ %H %M %S") + ".txt"
     logs = open(in_dir + log_name, "w")
 
+    for k,v in config.items():
+        print(str(k) + ": " + str(v))
+    
+    log_name = "glitch log " + datetime.now().strftime("%d-%m-%Y @ %H %M %S") + ".txt"
+    logs = open(in_dir + log_name, "w")
+    print("[{}] Config Loaded!\n".format(datetime.now()))
+    print("[{}] Log created: \"{}\" ".format(datetime.now(), in_dir + log_name))
 
-    print("Log created: \"{}\" ".format(in_dir + log_name))
-    print("Initialised rendering...")
+    print("[{}] Initialised rendering...".format(datetime.now()))
 
 
 
