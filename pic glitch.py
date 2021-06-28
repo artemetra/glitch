@@ -6,7 +6,7 @@ import time
 import sys
 import cv2
 import string
-from numpy import rad2deg
+#from numpy import rad2deg
 import yaml
 from datetime import datetime
 
@@ -14,6 +14,10 @@ from datetime import datetime
 #Internal flags and variables.
 _flag = True
 _rot = 0
+
+def _log(text, tabbing = 0):
+    print("[{}]{} {}".format(datetime.now(), "\t"*tabbing, text))
+    logs.write("[{}]{} {}\n".format(datetime.now(), "\t"*tabbing, text))
 
 def splitter(input_vid):
     os.chdir(in_dir)
@@ -33,17 +37,17 @@ def splitter(input_vid):
 def rotateRandom(out_path):
     i = Image.open(out_path)
     _rot = random.randint(0, 1) * 180
-    print("[{}] \t\tRotating by {} degrees".format(datetime.now(), _rot))
+    _log(f"Rotating by {_rot} degrees", 2)
     i = i.rotate(int(_rot), expand = 1)
     i.save(out_path)
-    print("[{}] \t\tRotation applied!".format(datetime.now()))
+    _log("Rotation applied!", 2)
     
 def compensateRotation(out_path):
     i = Image.open(out_path)
     i = i.rotate(360 - int(_rot), expand = 1)
-    print("[{}] \t\tCompensating by {} degrees".format(datetime.now(), 360 - int(_rot)))
+    _log(f"Compensating by {360 - int(_rot)} degrees", 2)
     i.save(out_path)
-    print("[{}] \t\tCompensation finished!".format(datetime.now()))
+    _log(f"Compensation finished!", 2)
 
 def verifyImg(in_path, out_path):
     global _flag
@@ -53,8 +57,7 @@ def verifyImg(in_path, out_path):
         img = Image.open(out_path) 
         img.save(out_path)
 
-        print(      "[{}] \tVerification passed!".format(datetime.now()))
-        logs.write( "[{}] \tVerification passed!\n".format(datetime.now()))
+        _log("Verification passed!", 1)
         _flag = False
     except (IOError, SyntaxError, OSError, UnidentifiedImageError, AttributeError, RecursionError, Image.DecompressionBombError) as e:
         shutil.copyfile(in_path, out_path)
@@ -74,7 +77,7 @@ def glitch(out_path):
         randomByteValue = bytes(randomStr, 'ASCII')
         fh.write(randomByteValue)
 
-        logs.write("[{}] Edited byte @ offset: {}, [{:>5}], Value: {}\n".format(datetime.now(),'0x%0*X' % (5, offset), offset, '0x%0*X' % (2,ord(randomByteValue))))
+        #_log("Edited byte @ offset: {}, [{:>5}], Value: {}\n".format('0x%0*X' % (5, offset), offset, '0x%0*X' % (2,ord(randomByteValue))))
         #logs.write("[{}] New Byte Value: {}\n".format(datetime.now(), str(hex(ord(randomByteValue)).zfill(2)).upper()))
     fh.close()
 
@@ -90,8 +93,7 @@ def manager(in_path, out_path):
         verifyImg(in_path, out_path)
         iterpass += 1
     
-    print(      "[{}] \t\tWorking image generated in {} passes".format(datetime.now(), iterpass))
-    logs.write( "[{}] \t\tWorking image generated in {} passes\n".format(datetime.now(), iterpass))
+    _log(f"Working image generated in {iterpass} passes", 2)
     #compensateRotation(out_path)
 
 
@@ -104,36 +106,31 @@ def main():
     for x in range(1, files_amt + 1):
         #_rot = random.randint(0, 3) * 90
         
-        print(      "[{}] =Started Rendering frame {}...=".format(datetime.now(), x))
-        logs.write( "[{}] =Started Rendering frame {}...=\n".format(datetime.now(), x))
+        _log(f"=Started Rendering frame {x}...=")
 
         trailing_0 = str(x).zfill(3)
         in_path = in_dir + in_name + ext
 
-        print(      "[{}] \tIn Path: {}".format(datetime.now(), in_path))
-        logs.write( "[{}] \tIn Path: {}\n".format(datetime.now(), in_path))
+        _log(f"In Path: {in_path}", 1)
 
         #bytes_amt = size 
         out_path = out_dir + out_name + trailing_0 + ext
 
-        print(      "[{}] \tOut Path: {}".format(datetime.now(), out_path))
-        logs.write( "[{}] \tOut Path: {}\n".format(datetime.now(), out_path))
+
+        _log(f"Out Path: {out_path}", 1)
 
         shutil.copyfile(in_path, out_path)
 
-        print(      "[{}] \tFile copied!".format(datetime.now()))
-        logs.write( "[{}] \tFile copied!\n".format(datetime.now()))
+        _log("File copied!", 1)
 
         manager(in_path, out_path)
 
-        print(      "[{}] =Finished Rendering frame {}, {} more to go!=".format(datetime.now(), x, files_amt - x))
-        logs.write( "[{}] =Finished Rendering frame {}, {} more to go!=\n".format(datetime.now(), x, files_amt - x))
+        _log(f"=Finished Rendering frame {x}, {files_amt - x} more to go!=")
     
 
     
     end = time.time()
-    print(      "[{}] === Done! Elapsed time: {} seconds====".format(datetime.now(), end - start))
-    logs.write( "[{}] === Done! Elapsed time: {} seconds====\n".format(datetime.now(), end - start))
+    _log("=== Done! Elapsed time: {} seconds====".format(end - start))
 
     logs.close()
 
@@ -152,14 +149,13 @@ if __name__ == '__main__':
     files_amt   = config['files_amt']
     bytes_amt   = config['bytes_amt']
 
-    log_name = "glitch log " + datetime.now().strftime("%d-%m-%Y @ %H %M %S") + ".txt"
-    logs = open(in_dir + log_name, "w")
 
     for k,v in config.items():
         print(str(k) + ": " + str(v))
     
     log_name = "glitch log " + datetime.now().strftime("%d-%m-%Y @ %H %M %S") + ".txt"
     logs = open(in_dir + log_name, "w")
+    
     print("[{}] Config Loaded!\n".format(datetime.now()))
     print("[{}] Log created: \"{}\" ".format(datetime.now(), in_dir + log_name))
 
