@@ -10,7 +10,6 @@ import string
 import yaml
 from datetime import datetime
 
-
 #Internal flags and variables.
 _flag = True
 _rot = 0
@@ -62,7 +61,6 @@ def verifyImg(in_path, out_path):
     except (IOError, SyntaxError, OSError, UnidentifiedImageError, AttributeError, RecursionError, Image.DecompressionBombError) as e:
         shutil.copyfile(in_path, out_path)
         _flag = True
-    
 
 
 def glitch(out_path):
@@ -158,6 +156,7 @@ if __name__ == '__main__':
     
     print("[{}] Config Loaded!\n".format(datetime.now()))
     print("[{}] Log created: \"{}\" ".format(datetime.now(), in_dir + log_name))
+
 
     print("[{}] Initialised rendering...".format(datetime.now()))
 
